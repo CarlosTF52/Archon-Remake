@@ -10,4 +10,7 @@ public static class BattleData
 
     public static string EnemyTag;
     public static string EnemyName;
+
+    public static bool BattleFinished;
+    public static bool PlayerWon;
 }

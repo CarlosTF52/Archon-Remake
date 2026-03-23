@@ -237,10 +237,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f1ceb2d7b0727541a053777b18d8a6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _movementSpeed: 15
+  _movementSpeed: 5
   _projectile: {fileID: 6468697599221859213, guid: 56769e695b586fb4ebe20ec85318f317, type: 3}
   _firePoint: {fileID: 199762570578882785}
-  _dashForce: 30
+  _dashForce: 15
   _dashDuration: 0.15
   _dashCooldown: 1
   _secondaryCooldown: 1.5

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 
 public class Grunt : MonoBehaviour
@@ -131,7 +132,11 @@ public class Grunt : MonoBehaviour
         Health = Health - damage;
         if (Health <= 1)
         {
-            Destroy(this.gameObject);
+            BattleData.BattleFinished = true;
+            BattleData.PlayerWon = true;
+           
+            SceneManager.LoadScene("GridScene");
+            Destroy(this.gameObject);          
         }
 
     }

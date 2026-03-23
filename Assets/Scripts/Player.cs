@@ -146,8 +146,9 @@ public class Player : MonoBehaviour
 
         if (_health <= 0)
         {
-            
-            Invoke(nameof(RestartScene), 0.5f);
+            BattleData.BattleFinished = true;
+            BattleData.PlayerWon = false;
+            SceneManager.LoadScene("GridScene");
         }
     }
 

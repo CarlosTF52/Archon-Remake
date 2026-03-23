@@ -122,15 +122,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 5
   _canDamage: 1
-  _moveSpeed: 15
+  _moveSpeed: 4
   _player: {fileID: 0}
   _projectile: {fileID: 6468697599221859213, guid: 752db60e79f51234eadbc3c7f02441b5, type: 3}
   _firePoint: {fileID: 5507576663451175880}
-  _fireCooldown: 3
-  _chaseRange: 15
-  _retreatRange: 6
+  _fireCooldown: 2
+  _chaseRange: 8
+  _retreatRange: 4
   _strafeRight: 1
-  _aimTime: 0.4
+  _aimTime: 0.2
   _strafeChangeInterval: 2
 --- !u!54 &6368011260444494930
 Rigidbody:
