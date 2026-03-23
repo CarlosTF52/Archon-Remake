@@ -27,6 +27,12 @@ public class Grunt : MonoBehaviour
 
     private float _nextFireTime;
 
+    [SerializeField]
+    private float _aimTime = 0.4f;
+
+    private float _aimStartTime;
+    private bool _isAiming;
+
     private IEnumerator ResetDamage;
 
     [SerializeField]
@@ -37,7 +43,7 @@ public class Grunt : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+       
     }
 
     // Update is called once per frame
@@ -77,17 +83,31 @@ public class Grunt : MonoBehaviour
             transform.forward = toPlayer;
         }
 
-        if (Time.time >= _nextFireTime && distance <= _chaseRange)
+        if (distance <= _chaseRange)
         {
-            Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
-            _nextFireTime = Time.time + _fireCooldown;
+            if (!_isAiming && Time.time >= _nextFireTime)
+            {
+                _isAiming = true;
+                _aimStartTime = Time.time;
+            }
+
+            if (_isAiming && Time.time >= _aimStartTime + _aimTime)
+            {
+                //Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
+                GameObject proj = Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
+                proj.GetComponent<Projectile>().SetOwner(gameObject);
+                _nextFireTime = Time.time + _fireCooldown;
+                _isAiming = false;
+            }
+        }
+        else
+        {
+            _isAiming = false;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        ResetDamage = hitRoutine(1.0f);
-
         ResetDamage = hitRoutine(1.0f);
 
         if (other.CompareTag("Projectile") && _canDamage)
@@ -123,5 +143,10 @@ public class Grunt : MonoBehaviour
             yield return new WaitForSeconds(cooldown);
             _canDamage = true;
         }
+    }
+
+    public void SetPlayer(Transform player)
+    {
+        _player = player;
     }
 }

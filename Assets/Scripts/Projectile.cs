@@ -11,8 +11,9 @@ public class Projectile : MonoBehaviour
     [SerializeField]
     public int _damage;
     [SerializeField]
-    private Grunt _enemy;
-    
+    private string _targetTag;
+    private GameObject _owner;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -22,8 +23,22 @@ public class Projectile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
         transform.Translate(Vector3.left * _projectileSpeed * Time.deltaTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject == _owner) return;
+
+        if (other.CompareTag(_targetTag))
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void SetOwner(GameObject owner)
+    {
+        _owner = owner;
     }
 
 

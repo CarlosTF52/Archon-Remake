@@ -121,7 +121,9 @@ public class Player : MonoBehaviour
 
     private void Shoot()
     {
-        Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
+        //Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
+        GameObject proj = Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
+        proj.GetComponent<Projectile>().SetOwner(gameObject);
     }
 
     private void SecondaryShot()
