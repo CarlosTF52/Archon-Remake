@@ -2,8 +2,11 @@ using UnityEngine;
 
 public class DuelManager : MonoBehaviour
 {
-    [SerializeField] private GameObject _playerPrefab;
-    [SerializeField] private GameObject _gruntPrefab;
+    [SerializeField] private GameObject _playerRangedPrefab;
+    [SerializeField] private GameObject _playerMeleePrefab;
+
+    [SerializeField] private GameObject _enemyRangedPrefab;
+    [SerializeField] private GameObject _enemyMeleePrefab;
 
     [SerializeField] private Transform _playerSpawn;
     [SerializeField] private Transform _enemySpawn;
@@ -15,9 +18,45 @@ public class DuelManager : MonoBehaviour
 
     private void SpawnCombatants()
     {
-        GameObject player = Instantiate(_playerPrefab, _playerSpawn.position, _playerSpawn.rotation);
-        GameObject enemy = Instantiate(_gruntPrefab, _enemySpawn.position, _enemySpawn.rotation);
+        GameObject playerPrefabToSpawn = null;
+        GameObject enemyPrefabToSpawn = null;
 
-        enemy.GetComponent<Grunt>().SetPlayer(player.transform);
+        if (BattleData.PlayerUnitClass == UnitClass.Ranged)
+        {
+            playerPrefabToSpawn = _playerRangedPrefab;
+        }
+        else if (BattleData.PlayerUnitClass == UnitClass.Melee)
+        {
+            playerPrefabToSpawn = _playerMeleePrefab;
+        }
+
+        if (BattleData.EnemyUnitClass == UnitClass.Ranged)
+        {
+            enemyPrefabToSpawn = _enemyRangedPrefab;
+        }
+        else if (BattleData.EnemyUnitClass == UnitClass.Melee)
+        {
+            enemyPrefabToSpawn = _enemyMeleePrefab;
+        }
+
+        if (playerPrefabToSpawn == null || enemyPrefabToSpawn == null)
+        {
+            Debug.LogError("Duel prefab not assigned for one of the unit classes.");
+            return;
+        }
+        GameObject player = Instantiate(playerPrefabToSpawn, _playerSpawn.position, _playerSpawn.rotation);
+        GameObject enemy = Instantiate(enemyPrefabToSpawn, _enemySpawn.position, _enemySpawn.rotation);
+
+        Grunt grunt = enemy.GetComponent<Grunt>();
+        if (grunt != null)
+        {
+            grunt.SetPlayer(player.transform);
+        }
+
+        MeleeEnemy meleeEnemy = enemy.GetComponent<MeleeEnemy>();
+        if (meleeEnemy != null)
+        {
+            meleeEnemy.SetPlayer(player.transform);
+        }
     }
 }

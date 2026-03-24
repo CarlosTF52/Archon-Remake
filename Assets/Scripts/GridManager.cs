@@ -4,6 +4,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
+[System.Serializable]
+public class EnemyData
+{
+    public GameObject unit;
+    public int x;
+    public int z;
+}
+
 public class GridManager : MonoBehaviour
 {
     [SerializeField]
@@ -30,21 +38,38 @@ public class GridManager : MonoBehaviour
     [SerializeField]
     private string _duelSceneName = "SampleScene";
     private bool _playerTurn = true;
-    private int _enemyX = 7;
-    private int _enemyZ = 7;
-    private GameObject _enemyUnit;
     [SerializeField]
     private TextMeshProUGUI _turnText;
     [SerializeField] private float _boardMoveSpeed = 4f;
 
+    private List<EnemyData> _enemies = new List<EnemyData>();
+
 
     private void Start()
     {
-        GenerateGrid();
+        if (!BattleData.Initialized)
+        {
+            InitializeBoardData();
+        }
+
+        GenerateGridFromData();
         ResolveBattleResult();
     }
 
-    private void GenerateGrid()
+    private void InitializeBoardData()
+    {
+        BattleData.PlayerX = 0;
+        BattleData.PlayerZ = 0;
+
+        BattleData.EnemyPositions.Clear();
+        BattleData.EnemyPositions.Add(new Vector2Int(7, 7));
+        BattleData.EnemyPositions.Add(new Vector2Int(6, 7));
+        BattleData.EnemyPositions.Add(new Vector2Int(7, 6));
+
+        BattleData.Initialized = true;
+    }
+
+    private void GenerateGridFromData()
     {
         _turnText.color = _playerTurn ? Color.white : Color.red;
         _occupied = new GameObject[_width, _height];
@@ -72,13 +97,22 @@ public class GridManager : MonoBehaviour
                 _tiles[x, z] = tile;
             }
         }
-        _playerX = 0;
-        _playerZ = 0;
-        _playerUnit = SpawnUnit(_playerUnitPrefab, 0, 0, true);
-        _occupied[0, 0] = _playerUnit;
 
-        _enemyUnit = SpawnUnit(_enemyUnitPrefab, 7, 7, false);
-        _occupied[7, 7] = _enemyUnit;
+
+        // Spawn player
+        _playerX = BattleData.PlayerX;
+        _playerZ = BattleData.PlayerZ;
+
+        _playerUnit = SpawnUnit(_playerUnitPrefab, _playerX, _playerZ, true);
+        _occupied[_playerX, _playerZ] = _playerUnit;
+
+        // Spawn enemies
+        _enemies.Clear();
+
+        foreach (Vector2Int pos in BattleData.EnemyPositions)
+        {
+            SpawnEnemy(pos.x, pos.y);
+        }
 
         UpdateTurnUI();
 
@@ -114,7 +148,9 @@ public class GridManager : MonoBehaviour
 
         if (occupant != null)
         {
-            if (occupant.CompareTag("Enemy"))
+            BoardUnit unit = occupant.GetComponent<BoardUnit>();
+
+            if (unit != null && unit.Team == UnitTeam.Enemy)
             {
                 BattleData.PlayerX = _playerX;
                 BattleData.PlayerZ = _playerZ;
@@ -125,6 +161,12 @@ public class GridManager : MonoBehaviour
                 BattleData.EnemyTag = occupant.tag;
                 BattleData.EnemyName = occupant.name;
 
+                BoardUnit playerBoardUnit = _playerUnit.GetComponent<BoardUnit>();
+                BoardUnit enemyBoardUnit = occupant.GetComponent<BoardUnit>();
+
+                BattleData.PlayerUnitClass = playerBoardUnit.Class;
+                BattleData.EnemyUnitClass = enemyBoardUnit.Class;
+
                 SceneManager.LoadScene(_duelSceneName);
             }
 
@@ -132,25 +174,6 @@ public class GridManager : MonoBehaviour
         }
 
         StartCoroutine(PlayerMoveRoutine(x, z));
-
-        Vector3 tilePosition = _tiles[x, z].transform.position;
-        Vector3 targetPosition = new Vector3(tilePosition.x, tilePosition.y, tilePosition.z);
-        StartCoroutine(MoveUnitToTile(_playerUnit, targetPosition));
-
-        _occupied[_playerX, _playerZ] = null;
-
-        _playerX = x;
-        _playerZ = z;
-
-        
-
-        _occupied[_playerX, _playerZ] = _playerUnit;
-
-        _playerTurn = false;
-        UpdateTurnUI();
-
-
-        StartCoroutine(EnemyTurnRoutine());
     }
 
     private void ResolveBattleResult()
@@ -165,6 +188,17 @@ public class GridManager : MonoBehaviour
             {
                 Destroy(enemy);
                 _occupied[BattleData.EnemyX, BattleData.EnemyZ] = null;
+
+                for (int i = _enemies.Count - 1; i >= 0; i--)
+                {
+                    if (_enemies[i].x == BattleData.EnemyX && _enemies[i].z == BattleData.EnemyZ)
+                    {
+                        _enemies.RemoveAt(i);
+                        break;
+                    }
+                }
+
+                BattleData.EnemyPositions.Remove(new Vector2Int(BattleData.EnemyX, BattleData.EnemyZ));
             }
         }
         else
@@ -181,7 +215,7 @@ public class GridManager : MonoBehaviour
 
     public bool IsValidMoveTile(int x, int z)
     {
-        if (!_playerTurn) return false;
+        if (_occupied == null) return false;
 
         int distance = Mathf.Abs(x - _playerX) + Mathf.Abs(z - _playerZ);
 
@@ -189,9 +223,13 @@ public class GridManager : MonoBehaviour
 
         GameObject occupant = _occupied[x, z];
 
-        if (occupant != null && !occupant.CompareTag("Enemy"))
+        if (occupant != null)
         {
-            return false;
+            BoardUnit unit = occupant.GetComponent<BoardUnit>();
+            if (unit != null && unit.Team != UnitTeam.Enemy)
+            {
+                return false;
+            }
         }
 
         return true;
@@ -199,62 +237,7 @@ public class GridManager : MonoBehaviour
 
     private void EnemyTurn()
     {
-        if (_enemyUnit == null)
-        {
-            _playerTurn = true;
-            
-            UpdateTurnUI();
-            return;
-        }
-
-        int newX = _enemyX;
-        int newZ = _enemyZ;
-
-        if (Mathf.Abs(_playerX - _enemyX) > Mathf.Abs(_playerZ - _enemyZ))
-        {
-            if (_playerX > _enemyX) newX++;
-            else if (_playerX < _enemyX) newX--;
-        }
-        else
-        {
-            if (_playerZ > _enemyZ) newZ++;
-            else if (_playerZ < _enemyZ) newZ--;
-        }
-
-        int distanceToPlayer = Mathf.Abs(newX - _playerX) + Mathf.Abs(newZ - _playerZ);
-
-        if (distanceToPlayer == 0)
-        {
-            BattleData.PlayerX = _playerX;
-            BattleData.PlayerZ = _playerZ;
-
-            BattleData.EnemyX = _enemyX;
-            BattleData.EnemyZ = _enemyZ;
-
-            BattleData.EnemyTag = _enemyUnit.tag;
-            BattleData.EnemyName = _enemyUnit.name;
-
-            SceneManager.LoadScene(_duelSceneName);
-            return;
-        }
-
-        if (_occupied[newX, newZ] == null)
-        {
-            StartCoroutine(EnemyMoveRoutine(newX, newZ));
-        }
-        else
-        {
-            _playerTurn = true;
-            
-            UpdateTurnUI();
-        }
-
-    }
-
-    private IEnumerator EnemyTurnRoutine()
-    {
-        yield return new WaitForSeconds(0.5f);
-        EnemyTurn();
+        StartCoroutine(EnemyTurnRoutine());
     }
 
     private void UpdateTurnUI()
@@ -297,10 +280,12 @@ public class GridManager : MonoBehaviour
         _playerX = x;
         _playerZ = z;
 
+        BattleData.PlayerX = _playerX;
+        BattleData.PlayerZ = _playerZ;
+
         _occupied[_playerX, _playerZ] = _playerUnit;
 
         _playerTurn = false;
-        
         UpdateTurnUI();
 
         yield return new WaitForSeconds(0.5f);
@@ -308,23 +293,97 @@ public class GridManager : MonoBehaviour
         EnemyTurn();
     }
 
-    private IEnumerator EnemyMoveRoutine(int newX, int newZ)
+    private IEnumerator EnemyTurnRoutine()
     {
-        Vector3 tilePosition = _tiles[newX, newZ].transform.position;
-        Vector3 targetPosition = new Vector3(tilePosition.x, tilePosition.y, tilePosition.z);
+        if (_enemies.Count == 0)
+        {
+            _playerTurn = true;
+            UpdateTurnUI();
+            yield break;
+        }
 
-        _occupied[_enemyX, _enemyZ] = null;
+        for (int i = 0; i < _enemies.Count; i++)
+        {
+            EnemyData enemy = _enemies[i];
 
-        yield return StartCoroutine(MoveUnitToTile(_enemyUnit, targetPosition));
+            if (enemy.unit == null) continue;
 
-        _enemyX = newX;
-        _enemyZ = newZ;
+            int oldX = enemy.x;
+            int oldZ = enemy.z;
 
-        _occupied[_enemyX, _enemyZ] = _enemyUnit;
+            int newX = enemy.x;
+            int newZ = enemy.z;
+
+            if (Mathf.Abs(_playerX - enemy.x) > Mathf.Abs(_playerZ - enemy.z))
+            {
+                if (_playerX > enemy.x) newX++;
+                else if (_playerX < enemy.x) newX--;
+            }
+            else
+            {
+                if (_playerZ > enemy.z) newZ++;
+                else if (_playerZ < enemy.z) newZ--;
+            }
+
+            int distanceToPlayer = Mathf.Abs(newX - _playerX) + Mathf.Abs(newZ - _playerZ);
+
+            if (distanceToPlayer == 0)
+            {
+                BattleData.PlayerX = _playerX;
+                BattleData.PlayerZ = _playerZ;
+
+                BattleData.EnemyX = enemy.x;
+                BattleData.EnemyZ = enemy.z;
+
+                BattleData.EnemyTag = enemy.unit.tag;
+                BattleData.EnemyName = enemy.unit.name;
+
+                SceneManager.LoadScene(_duelSceneName);
+                yield break;
+            }
+
+            if (newX >= 0 && newX < _width && newZ >= 0 && newZ < _height && _occupied[newX, newZ] == null)
+            {
+                Vector3 tilePosition = _tiles[newX, newZ].transform.position;
+                Vector3 targetPosition = new Vector3(tilePosition.x, tilePosition.y, tilePosition.z);
+
+                _occupied[oldX, oldZ] = null;
+
+                yield return StartCoroutine(MoveUnitToTile(enemy.unit, targetPosition));
+
+                enemy.x = newX;
+                enemy.z = newZ;
+
+                _occupied[enemy.x, enemy.z] = enemy.unit;
+
+                for (int j = 0; j < BattleData.EnemyPositions.Count; j++)
+                {
+                    if (BattleData.EnemyPositions[j].x == oldX && BattleData.EnemyPositions[j].y == oldZ)
+                    {
+                        BattleData.EnemyPositions[j] = new Vector2Int(newX, newZ);
+                        break;
+                    }
+                }
+            }
+
+            yield return new WaitForSeconds(0.2f);
+        }
 
         _playerTurn = true;
-        
         UpdateTurnUI();
+    }
+
+    private void SpawnEnemy(int x, int z)
+    {
+        GameObject enemyUnit = SpawnUnit(_enemyUnitPrefab, x, z, false);
+        _occupied[x, z] = enemyUnit;
+
+        EnemyData enemyData = new EnemyData();
+        enemyData.unit = enemyUnit;
+        enemyData.x = x;
+        enemyData.z = z;
+
+        _enemies.Add(enemyData);
     }
 }
 

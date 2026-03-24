@@ -647,8 +647,8 @@ MonoBehaviour:
   _tileSize: 1
   _whiteMaterial: {fileID: 2100000, guid: 2cec6930aab6cae42bf8be0b091fa710, type: 2}
   _blackMaterial: {fileID: 2100000, guid: b2f5a31a041d48c429b7137231474076, type: 2}
-  _playerUnitPrefab: {fileID: 9149360592468706673, guid: cf06f2e69849f0448aecc87547115e96, type: 3}
-  _enemyUnitPrefab: {fileID: 2565656596818106766, guid: bb9200f778921f545bf0a87ccb73f59d, type: 3}
+  _playerUnitPrefab: {fileID: 9149360592468706673, guid: e4c4b7d4b3b0a024884dd79f787c4ed7, type: 3}
+  _enemyUnitPrefab: {fileID: 2565656596818106766, guid: d91589681eff40c4aa8e85682dec1b14, type: 3}
   _duelSceneName: SampleScene
   _turnText: {fileID: 440748699}
   _boardMoveSpeed: 4

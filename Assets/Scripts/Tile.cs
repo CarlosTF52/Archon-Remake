@@ -32,7 +32,7 @@ public class Tile : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if (_gridManager.IsValidMoveTile(x, z))
+        if (_gridManager != null && _gridManager.IsValidMoveTile(x, z))
         {
             _renderer.material.color = Color.gray;
         }

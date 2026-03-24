@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6368011260444494930}
   - component: {fileID: 6922093140417063046}
   m_Layer: 0
-  m_Name: GruntUnit
+  m_Name: GruntMeleeUnit
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Team: 1
-  Class: 0
+  Class: 1
 --- !u!1 &8275045119385729497
 GameObject:
   m_ObjectHideFlags: 0

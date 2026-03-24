@@ -1,53 +1,41 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public class Player : MonoBehaviour
+public class MeleePlayer : MonoBehaviour
 {
-    [SerializeField]
-    private float _movementSpeed;
-    [SerializeField]
-    private GameObject _projectile;
-    [SerializeField]
-    private Transform _firePoint;
-    private Rigidbody rb;
-    private Vector2 moveInput;
-    private bool _fire;
-    private float _fireCooldown = 0.3f;
+    [SerializeField] private float _movementSpeed;
+    [SerializeField] private GameObject _meleeHitbox;
+
+    [SerializeField] private float _attackDuration = 0.15f;
+    [SerializeField] private float _fireCooldown = 0.4f;
     private float _nextFireTime;
-    [SerializeField]
-    private float _dashForce = 10f;
-    [SerializeField]
-    private float _dashDuration = 0.15f;
-    [SerializeField]
-    private float _dashCooldown = 1f;
+
+    [SerializeField] private float _dashForce = 10f;
+    [SerializeField] private float _dashDuration = 0.15f;
+    [SerializeField] private float _dashCooldown = 1f;
+
     private bool _isDashing;
     private float _dashEndTime;
     private float _nextDashTime;
     private Vector3 _dashDirection;
-    [SerializeField]
-    private float _secondaryCooldown = 1.5f;
 
-    private float _nextSecondaryTime;
+    [SerializeField] private int _health = 5;
 
-    [SerializeField]
-    private int _health = 5;
+    private Rigidbody rb;
+    private Vector2 moveInput;
 
-    [SerializeField]
-    private GameObject _secondaryProjectile;
-
-
-
-
-    // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (_meleeHitbox != null)
+        {
+            _meleeHitbox.SetActive(false);
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
         Vector3 movement = new Vector3(moveInput.x, 0f, moveInput.y);
@@ -68,6 +56,7 @@ public class Player : MonoBehaviour
 
         Plane plane = new Plane(Vector3.up, transform.position);
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+
         if (plane.Raycast(ray, out float distance))
         {
             Vector3 targetPoint = ray.GetPoint(distance);
@@ -90,11 +79,21 @@ public class Player : MonoBehaviour
     public void Fire(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
-        if (Time.time >= _nextFireTime)
-        {
-                Shoot();
-                _nextFireTime = Time.time + _fireCooldown;
-        }
+        if (Time.time < _nextFireTime) return;
+
+        StartCoroutine(MeleeAttackRoutine());
+        _nextFireTime = Time.time + _fireCooldown;
+    }
+
+    private IEnumerator MeleeAttackRoutine()
+    {
+        _meleeHitbox.SetActive(true);
+
+        rb.AddForce(transform.forward * 50, ForceMode.Impulse);
+
+        yield return new WaitForSeconds(_attackDuration);
+
+        _meleeHitbox.SetActive(false);
     }
 
     public void Dodge(InputAction.CallbackContext context)
@@ -108,27 +107,6 @@ public class Player : MonoBehaviour
         _isDashing = true;
         _dashEndTime = Time.time + _dashDuration;
         _nextDashTime = Time.time + _dashCooldown;
-    }
-
-    public void SecondaryFire(InputAction.CallbackContext context)
-    {
-        if (!context.performed) return;
-        if (Time.time < _nextSecondaryTime) return;
-
-        SecondaryShot();
-        _nextSecondaryTime = Time.time + _secondaryCooldown;
-    }
-
-    private void Shoot()
-    {
-        //Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
-        GameObject proj = Instantiate(_projectile, _firePoint.position, _firePoint.rotation);
-        proj.GetComponent<Projectile>().SetOwner(gameObject);
-    }
-
-    private void SecondaryShot()
-    {
-        Instantiate(_secondaryProjectile, _firePoint.position, _firePoint.rotation);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -150,10 +128,5 @@ public class Player : MonoBehaviour
             BattleData.PlayerWon = false;
             SceneManager.LoadScene("GridScene");
         }
-    }
-
-    private void RestartScene()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

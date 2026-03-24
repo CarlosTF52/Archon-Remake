@@ -579,8 +579,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 400ca776839ccc64d942ce4c25932849, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 9149360592468706673, guid: b7f685e9f49150d499f9aa5962e2592d, type: 3}
-  _gruntPrefab: {fileID: 2565656596818106766, guid: c5e0cb270aae87b4e83a13fbb98f9c12, type: 3}
+  _playerRangedPrefab: {fileID: 9149360592468706673, guid: b7f685e9f49150d499f9aa5962e2592d, type: 3}
+  _playerMeleePrefab: {fileID: 9149360592468706673, guid: 38a3631709e677c45a5ca7e9d4a1974a, type: 3}
+  _enemyRangedPrefab: {fileID: 2565656596818106766, guid: c5e0cb270aae87b4e83a13fbb98f9c12, type: 3}
+  _enemyMeleePrefab: {fileID: 2565656596818106766, guid: 2b736e759de74c64aa3151918b16cd98, type: 3}
   _playerSpawn: {fileID: 1370889932}
   _enemySpawn: {fileID: 1801914567}
 --- !u!4 &1444665357
